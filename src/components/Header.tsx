@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Menu, X, PenLine } from "lucide-react";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,9 +36,13 @@ const Header = () => {
                 {link.name}
               </a>
             ))}
-            <button className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity">
-              Subscribe
-            </button>
+            <Link 
+              to="/write" 
+              className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity flex items-center gap-2"
+            >
+              <PenLine size={16} />
+              Write Post
+            </Link>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -62,9 +67,14 @@ const Header = () => {
                 {link.name}
               </a>
             ))}
-            <button className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity w-full">
-              Subscribe
-            </button>
+            <Link 
+              to="/write" 
+              className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity w-full flex items-center justify-center gap-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <PenLine size={16} />
+              Write Post
+            </Link>
           </nav>
         )}
       </div>
