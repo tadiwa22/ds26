@@ -1,52 +1,41 @@
+import { useEffect, useState } from "react";
 import ArticleCard from "./ArticleCard";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
-const articles = [
-  {
-    title: "The Rise of Multimodal AI: Beyond Text and Images",
-    excerpt: "2026 marks the year where AI systems seamlessly integrate text, images, audio, and video understanding. We explore how these multimodal models are revolutionizing industries from healthcare diagnostics to autonomous systems.",
-    category: "AI Trends",
-    readTime: "8 min read",
-    date: "Jan 2, 2026",
-    featured: true,
-  },
-  {
-    title: "Quantum Machine Learning: From Theory to Practice",
-    excerpt: "Quantum computing is finally delivering on its promise for ML applications. Here's what data scientists need to know.",
-    category: "Quantum ML",
-    readTime: "6 min read",
-    date: "Dec 28, 2025",
-  },
-  {
-    title: "Edge AI: Processing Data Where It's Generated",
-    excerpt: "How edge computing is reshaping real-time analytics and reducing latency in critical applications.",
-    category: "Edge Computing",
-    readTime: "5 min read",
-    date: "Dec 25, 2025",
-  },
-  {
-    title: "Synthetic Data: The New Training Ground",
-    excerpt: "Privacy-preserving synthetic datasets are becoming the standard for training models. We analyze the best practices.",
-    category: "Data Privacy",
-    readTime: "7 min read",
-    date: "Dec 22, 2025",
-  },
-  {
-    title: "AutoML 3.0: Self-Optimizing Pipelines",
-    excerpt: "The latest generation of automated machine learning tools can now handle end-to-end model development.",
-    category: "AutoML",
-    readTime: "4 min read",
-    date: "Dec 20, 2025",
-  },
-  {
-    title: "Explainable AI in Production Systems",
-    excerpt: "Regulatory requirements are pushing XAI from research to production. Here's how companies are adapting.",
-    category: "XAI",
-    readTime: "6 min read",
-    date: "Dec 18, 2025",
-  },
-];
+interface BlogPost {
+  id: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  read_time: string;
+  created_at: string;
+}
 
 const ArticlesSection = () => {
+  const [articles, setArticles] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("id, title, excerpt, category, read_time, created_at")
+        .eq("published", true)
+        .order("created_at", { ascending: false })
+        .limit(6);
+
+      if (error) {
+        console.error("Error fetching articles:", error);
+      } else {
+        setArticles(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchArticles();
+  }, []);
+
   return (
     <section id="articles" className="py-24 bg-background">
       <div className="container mx-auto px-6">
@@ -67,11 +56,31 @@ const ArticlesSection = () => {
           </a>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {articles.map((article, index) => (
-            <ArticleCard key={index} {...article} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-64 rounded-xl bg-card animate-pulse" />
+            ))}
+          </div>
+        ) : articles.length === 0 ? (
+          <div className="text-center py-16 text-muted-foreground">
+            <p className="text-lg">No articles yet. Be the first to publish!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {articles.map((article, index) => (
+              <ArticleCard
+                key={article.id}
+                title={article.title}
+                excerpt={article.excerpt}
+                category={article.category}
+                readTime={article.read_time}
+                date={format(new Date(article.created_at), "MMM d, yyyy")}
+                featured={index === 0}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
