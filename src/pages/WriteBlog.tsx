@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Image, Send, Bold, Italic, List, Link2, Code } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,13 +13,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const WriteBlog = () => {
+  const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("");
   const [coverImage, setCoverImage] = useState("");
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const categories = [
     "Machine Learning",
@@ -32,22 +35,66 @@ const WriteBlog = () => {
     "Statistics",
   ];
 
-  const handlePublish = () => {
+  const calculateReadTime = (text: string) => {
+    const wordsPerMinute = 200;
+    const words = text.trim().split(/\s+/).length;
+    const minutes = Math.ceil(words / wordsPerMinute);
+    return `${minutes} min read`;
+  };
+
+  const handlePublish = async () => {
     if (!title || !content || !category) {
       toast.error("Please fill in all required fields");
       return;
     }
-    toast.success("Blog post published successfully!");
-    // Reset form
-    setTitle("");
-    setExcerpt("");
-    setContent("");
-    setCategory("");
-    setCoverImage("");
+
+    setIsPublishing(true);
+    try {
+      const { error } = await supabase.from("blog_posts").insert({
+        title,
+        excerpt: excerpt || title,
+        content,
+        category,
+        cover_image_url: coverImage || null,
+        read_time: calculateReadTime(content),
+        published: true,
+      });
+
+      if (error) throw error;
+
+      toast.success("Blog post published successfully!");
+      navigate("/");
+    } catch (error) {
+      console.error("Error publishing post:", error);
+      toast.error("Failed to publish post. Please try again.");
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
-  const handleSaveDraft = () => {
-    toast.info("Draft saved successfully!");
+  const handleSaveDraft = async () => {
+    if (!title || !content || !category) {
+      toast.error("Please fill in title, content, and category first");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("blog_posts").insert({
+        title,
+        excerpt: excerpt || title,
+        content,
+        category,
+        cover_image_url: coverImage || null,
+        read_time: calculateReadTime(content),
+        published: false,
+      });
+
+      if (error) throw error;
+      toast.success("Draft saved successfully!");
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      toast.error("Failed to save draft. Please try again.");
+    }
   };
 
   return (
@@ -64,9 +111,9 @@ const WriteBlog = () => {
               <Button variant="outline" onClick={handleSaveDraft}>
                 Save Draft
               </Button>
-              <Button onClick={handlePublish} className="gap-2">
+              <Button onClick={handlePublish} className="gap-2" disabled={isPublishing}>
                 <Send size={16} />
-                Publish
+                {isPublishing ? "Publishing..." : "Publish"}
               </Button>
             </div>
           </div>
