@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { 
   ArrowLeft, 
   Plus, 
-  Edit, 
+  Pencil, 
   Trash2, 
   Eye, 
   EyeOff, 
@@ -13,6 +13,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -32,6 +35,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -39,7 +48,10 @@ import { useAuth } from "@/contexts/AuthContext";
 interface BlogPost {
   id: string;
   title: string;
+  excerpt: string;
+  content: string;
   category: string;
+  cover_image_url: string | null;
   published: boolean;
   created_at: string;
   read_time: string;
@@ -50,6 +62,8 @@ const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -67,7 +81,7 @@ const Admin = () => {
     setIsLoading(true);
     const { data, error } = await supabase
       .from("blog_posts")
-      .select("id, title, category, published, created_at, read_time")
+      .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -77,6 +91,36 @@ const Admin = () => {
       setPosts(data || []);
     }
     setIsLoading(false);
+  };
+
+  const handleEdit = (post: BlogPost) => {
+    setEditingPost({ ...post });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingPost) return;
+
+    const { error } = await supabase
+      .from("blog_posts")
+      .update({
+        title: editingPost.title,
+        excerpt: editingPost.excerpt,
+        content: editingPost.content,
+        category: editingPost.category,
+        cover_image_url: editingPost.cover_image_url,
+        read_time: editingPost.read_time,
+      })
+      .eq("id", editingPost.id);
+
+    if (error) {
+      toast.error("Failed to update post");
+    } else {
+      toast.success("Post updated successfully");
+      setIsEditDialogOpen(false);
+      setEditingPost(null);
+      fetchPosts();
+    }
   };
 
   const handleTogglePublish = async (post: BlogPost) => {
@@ -253,6 +297,14 @@ const Admin = () => {
                             <Button
                               variant="ghost"
                               size="icon"
+                              onClick={() => handleEdit(post)}
+                              title="Edit post"
+                            >
+                              <Pencil size={16} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => handleTogglePublish(post)}
                               title={post.published ? "Unpublish" : "Publish"}
                             >
@@ -293,6 +345,92 @@ const Admin = () => {
           )}
         </div>
       </main>
+      {/* Edit Post Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Post</DialogTitle>
+          </DialogHeader>
+          {editingPost && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-title">Title</Label>
+                <Input
+                  id="edit-title"
+                  value={editingPost.title}
+                  onChange={(e) =>
+                    setEditingPost({ ...editingPost, title: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-category">Category</Label>
+                <Input
+                  id="edit-category"
+                  value={editingPost.category}
+                  onChange={(e) =>
+                    setEditingPost({ ...editingPost, category: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-read-time">Read Time</Label>
+                <Input
+                  id="edit-read-time"
+                  value={editingPost.read_time}
+                  onChange={(e) =>
+                    setEditingPost({ ...editingPost, read_time: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-cover-image">Cover Image URL</Label>
+                <Input
+                  id="edit-cover-image"
+                  value={editingPost.cover_image_url || ""}
+                  onChange={(e) =>
+                    setEditingPost({
+                      ...editingPost,
+                      cover_image_url: e.target.value || null,
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-excerpt">Excerpt</Label>
+                <Textarea
+                  id="edit-excerpt"
+                  value={editingPost.excerpt}
+                  onChange={(e) =>
+                    setEditingPost({ ...editingPost, excerpt: e.target.value })
+                  }
+                  rows={3}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-content">Content</Label>
+                <Textarea
+                  id="edit-content"
+                  value={editingPost.content}
+                  onChange={(e) =>
+                    setEditingPost({ ...editingPost, content: e.target.value })
+                  }
+                  rows={10}
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveEdit}>Save Changes</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
