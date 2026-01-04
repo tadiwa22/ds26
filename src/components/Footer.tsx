@@ -1,4 +1,5 @@
-import { Github, Twitter, Linkedin } from "lucide-react";
+import { Github, Twitter, Linkedin, Mail, Phone, User } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -41,37 +42,59 @@ const Footer = () => {
             </div>
           </div>
 
+          {/* About & Contact */}
+          <div>
+            <h4 className="font-display font-semibold mb-4">About the Author</h4>
+            <ul className="space-y-3">
+              <li className="flex items-center gap-2 text-muted-foreground">
+                <User className="w-4 h-4 text-primary" />
+                <span>Tadiwanashe Maderera</span>
+              </li>
+              <li>
+                <a
+                  href="mailto:tadsmaderera16@gmail.com"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Mail className="w-4 h-4 text-primary" />
+                  <span>tadsmaderera16@gmail.com</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="tel:+263771162136"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Phone className="w-4 h-4 text-primary" />
+                  <span>+263 771 162 136</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
           {/* Quick Links */}
           <div>
             <h4 className="font-display font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-3">
-              {["Home", "Articles", "Topics", "About", "Contact"].map((link) => (
-                <li key={link}>
-                  <a
-                    href="#"
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Topics */}
-          <div>
-            <h4 className="font-display font-semibold mb-4">Popular Topics</h4>
-            <ul className="space-y-3">
-              {["Machine Learning", "Deep Learning", "MLOps", "Data Privacy", "Analytics"].map((topic) => (
-                <li key={topic}>
-                  <a
-                    href="#"
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {topic}
-                  </a>
-                </li>
-              ))}
+              <li>
+                <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <a href="#articles" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Articles
+                </a>
+              </li>
+              <li>
+                <a href="#topics" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Topics
+                </a>
+              </li>
+              <li>
+                <Link to="/auth" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Admin Login
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
